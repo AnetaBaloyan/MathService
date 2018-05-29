@@ -1,4 +1,5 @@
 ﻿using System;
+
 namespace MathServer
 {
     public class Calculator
@@ -21,6 +22,32 @@ namespace MathServer
         public static double Mult(double a, double b)
         {
             return a * b;
+        }
+
+        public static string Handle(string msg)
+        {
+            if (msg.Contains("*"))
+            {
+                string[] arr = msg.Split('*');
+                return (Mult(Double.Parse(arr[0]), Double.Parse(arr[1])).ToString());
+            }
+            else if (msg.Contains("+"))
+            {
+                string[] arr = msg.Split('+');
+                return (Add(Double.Parse(arr[0]), Double.Parse(arr[1])).ToString());
+            }
+            else if (msg.Contains("-"))
+            {
+                string[] arr = msg.Split('-');
+                return (Sub(Double.Parse(arr[0]), Double.Parse(arr[1])).ToString());
+            }
+            else if (msg.Contains("/"))
+            {
+                string[] arr = msg.Split('/');
+                return (Div(Double.Parse(arr[0]), Double.Parse(arr[1])).ToString());
+            }
+            else
+                return "Invalid operation. The protocol is number_operator_number.";
         }
     }
 }

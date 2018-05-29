@@ -6,120 +6,59 @@ using System.Threading.Tasks;
 using System.IO;
 using MathServer;
 
-
 namespace UdpServer
 {
+    /// <summary>
+    /// UDP Server.
+    /// </summary>
     public class UDPServer
     {
+        /// <summary>
+        /// Starts the UDP server.
+        /// </summary>
         public UDPServer()
         {
-            IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse("192.168.1.4"), 3002);
+            // The endpoint of the server.
+            IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 3002);
             UdpClient newsock = new UdpClient(endpoint);
 
             while (true)
             {
-                byte[] data = new byte[1024];
+                // The buffer.
+                byte[] buffer = new byte[1024];
 
-                Console.WriteLine("Waiting for a connection...");
+                Console.WriteLine("Server has strated!");
 
-                IPEndPoint client = new IPEndPoint(IPAddress.Any, 3002);
-
-                bool connected = false;
-
+                // Starts listening to requests.
                 while (true)
                 {
-                    if(connected)
+                    // The endpoint of the client.
+                    IPEndPoint client = new IPEndPoint(IPAddress.Any, 3002);
+
+                    Console.WriteLine("Waiting for a request...");
+
+                    // Recieves the message and sets the client endpoint.
+                    buffer = newsock.Receive(ref client);
+
+                    // Decodes the message into a string.
+                    string innerMsg = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
+
+                    // If the message is not a request to end.
+                    if (!(innerMsg.ToLower().Replace(" ", "") == "end"))
                     {
-                        var task = new Task(() =>
-                        {
-                            while(true)
-                            {
-                                data = newsock.Receive(ref client);
+                        // Handles the request by the help of the Calculator service.
+                        string backMsg = Calculator.Handle(innerMsg.Replace(" ", ""));
 
-                                string innerMsg = Encoding.UTF8.GetString(data, 0, data.Length);
+                        // Encodes into the buffer.
+                        buffer = Encoding.UTF8.GetBytes(backMsg);
 
-                                if (!(innerMsg.ToLower().Replace(" ", "") == "end"))
-                                {
-                                    if (innerMsg.Contains("*"))
-                                    {
-                                        string[] arr = innerMsg.Split('*');
-                                        string backMsg = Calculator.Mult(Double.Parse(arr[0]), Double.Parse(arr[1])).ToString();
-                                        data = Encoding.UTF8.GetBytes(backMsg);
-                                        newsock.Send(data, data.Length, client);
-                                    }
-                                    else if (innerMsg.Contains("+"))
-                                    {
-                                        string[] arr = innerMsg.Split('+');
-                                        string backMsg = Calculator.Add(Double.Parse(arr[0]), Double.Parse(arr[1])).ToString();
-                                        data = Encoding.UTF8.GetBytes(backMsg);
-                                        newsock.Send(data, data.Length, client);
-                                    }
-                                    else if (innerMsg.Contains("-"))
-                                    {
-                                        string[] arr = innerMsg.Split('-');
-                                        string backMsg = Calculator.Sub(Double.Parse(arr[0]), Double.Parse(arr[1])).ToString();
-                                        data = Encoding.UTF8.GetBytes(backMsg);
-                                        newsock.Send(data, data.Length, client);
-                                    }
-                                    else if (innerMsg.Contains("/"))
-                                    {
-                                        string[] arr = innerMsg.Split('/');
-                                        string backMsg = Calculator.Div(Double.Parse(arr[0]), Double.Parse(arr[1])).ToString();
-                                        data = Encoding.UTF8.GetBytes(backMsg);
-                                        newsock.Send(data, data.Length, client);
-                                    }
-                                }
-                                else
-                                {
-                                    break;
-                                }   
-                            }
-                        });
+                        // Sends the result back to the client.
+                        newsock.Send(buffer, buffer.Length, client);
 
-                        task.Start();
+                        Console.WriteLine("Solved!");
                     }
-                    else
-                    {
-                        data = newsock.Receive(ref client);
 
-                        string msg = Encoding.UTF8.GetString(data, 0, data.Length);
-
-                        if (!(msg.ToLower().Replace(" ", "") == "end"))
-                        {
-                            if (msg.Contains("*"))
-                            {
-                                string[] arr = msg.Split('*');
-                                string backMsg = Calculator.Mult(Double.Parse(arr[0]), Double.Parse(arr[1])).ToString();
-                                data = Encoding.UTF8.GetBytes(backMsg);
-                                newsock.Send(data, data.Length, client);
-                            }
-                            else if (msg.Contains("+"))
-                            {
-                                string[] arr = msg.Split('+');
-                                string backMsg = Calculator.Add(Double.Parse(arr[0]), Double.Parse(arr[1])).ToString();
-                                data = Encoding.UTF8.GetBytes(backMsg);
-                                newsock.Send(data, data.Length, client);
-                            }
-                            else if (msg.Contains("-"))
-                            {
-                                string[] arr = msg.Split('-');
-                                string backMsg = Calculator.Sub(Double.Parse(arr[0]), Double.Parse(arr[1])).ToString();
-                                data = Encoding.UTF8.GetBytes(backMsg);
-                                newsock.Send(data, data.Length, client);
-                            }
-                            else if (msg.Contains("/"))
-                            {
-                                string[] arr = msg.Split('/');
-                                string backMsg = Calculator.Div(Double.Parse(arr[0]), Double.Parse(arr[1])).ToString();
-                                data = Encoding.UTF8.GetBytes(backMsg);
-                                newsock.Send(data, data.Length, client);
-                            }
-                        }
-                        else
-                        {
-                            break;
-                        }   
-                    }
+                    // Continues to other requests.
                 }
             }
         }
